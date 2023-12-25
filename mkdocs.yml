@@ -2,6 +2,19 @@ site_name: 闲番观察室
 theme: 
   name: material
   language: zh 
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      toggle:
+        icon: material/weather-sunny
+        name: 开启深色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      toggle:
+        icon: material/weather-night
+        name: 关闭深色模式
   features:
     - navigation.instant
     - navigation.instant.progress
@@ -9,6 +22,12 @@ theme:
     - navigation.path
     - navigation.indexes 
     - toc.follow
+    - navigation.footer
+  
+plugins:
+  - privacy
+  - search:
+      lang: zh
 
 markdown_extensions:
   - toc:
