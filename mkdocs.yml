@@ -19,7 +19,6 @@ theme:
     - navigation.instant
     - navigation.instant.progress
     - navigation.tracking
-    - navigation.path
     - navigation.indexes 
     - toc.follow
     - navigation.footer
