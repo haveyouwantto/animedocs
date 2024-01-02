@@ -1,5 +1,5 @@
 ---
-title: "Maple-Kaede的闲番观察室"
+title: Maple-Kaede的闲番观察室
 date: 2023-12-25
 author: Maple-Kaede
 ---
