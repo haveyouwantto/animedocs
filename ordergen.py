@@ -67,3 +67,4 @@ def generate_update_order(docs_path):
 if __name__ == "__main__":
     docs_path = "docs"  # Change this to your actual path
     generate_update_order(docs_path)
+    print("Finished list generation")
