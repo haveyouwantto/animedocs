@@ -29,6 +29,6 @@ plugins:
       lang: zh
 
 markdown_extensions:
-  - toc:
+  toc:
       permalink: true
       slugify: !!python/name:pymdownx.slugs.uslugify
