@@ -2,6 +2,7 @@ site_name: 闲番观察室
 theme: 
   name: material
   language: zh 
+  logo: assets/history_edu.svg
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -18,7 +19,6 @@ theme:
   features:
     - navigation.instant
     - navigation.instant.progress
-    - navigation.tracking
     - navigation.indexes 
     - toc.follow
     - navigation.footer
