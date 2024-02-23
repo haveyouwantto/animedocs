@@ -1,4 +1,4 @@
 #!/bin/bash
-pip install mkdocs mkdocs-material mkdocs-rss-plugin
+pip install -r requirements.txt
 python3 ordergen.py
 mkdocs build
