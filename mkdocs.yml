@@ -28,15 +28,15 @@ plugins:
   - privacy
   - search:
       lang: zh
-  - rss:
-      match_path: .* 
-      date_from_meta:
-        as_creation: date
+  # - rss:
+  #     match_path: .* 
+  #     date_from_meta:
+  #       as_creation: date
 
-extra:
-  social:
-    - icon: material/rss-box
-      link: /feed_rss_created.xml
+# extra:
+#   social:
+#     - icon: material/rss-box
+#       link: /feed_rss_created.xml
 
 markdown_extensions:
   - toc:
