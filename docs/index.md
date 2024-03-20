@@ -8,6 +8,8 @@ author: Maple-Kaede
 
 这里是Maple-Kaede的闲番观察室，欢迎来到我的世界！这里我会分享一些我喜欢的闲番作品，以及一些相关的观察和感想。
 
+<img src="img/welcome.jpg" width="50%">
+
 ## 介绍
 
 嘿！我是 Maple-Kaede，很高兴你来访问我的外部网站。让我与你分享我用户名背后的故事。
