@@ -1,5 +1,6 @@
 site_name: 闲番观察室
 site_url: https://anime.maple-kaede.eu.org
+copyright: "Content licensed under CC BY 4.0, author: Maple-Kaede"
 theme: 
   name: material
   language: zh 
