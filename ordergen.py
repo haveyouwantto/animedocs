@@ -44,6 +44,7 @@ def generate_update_order(docs_path):
     for root, _, files in os.walk(docs_path):
         for file_name in files:
             if file_name.endswith(".md"):
+                print(f"Processing file: {file_name}")
                 file_path = os.path.join(root, file_name)
                 with open(file_path, 'r', encoding='utf-8') as file:
                     file_content = file.read()
