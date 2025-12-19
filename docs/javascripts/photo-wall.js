@@ -209,7 +209,7 @@ class PhotoWall {
         finalCanvas.toBlob(blob => {
             const url = URL.createObjectURL(blob);
             this.container.style.backgroundImage = `url(${url})`;
-            this.container.style.border = '1em solid #7d563d'; // Relative border size
+            this.container.style.border = '12px solid #7d563d'; // Relative border size
             this.container.style.boxSizing = 'border-box';
         });
     }
