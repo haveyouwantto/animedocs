@@ -39,6 +39,10 @@ plugins:
 #     - icon: material/rss-box
 #       link: /feed_rss_created.xml
 
+extra_javascript:
+  - javascripts/photo-wall.js
+  - javascripts/loader.js
+
 markdown_extensions:
   - toc:
       permalink: true
