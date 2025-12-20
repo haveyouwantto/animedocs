@@ -15,11 +15,11 @@ class PhotoWall {
 
         // Styles mapping
         this.paddingMap = {
-            's': 'min(0.5%, 8px)',
-            'm': 'min(1%, 16px)',
-            'l': 'min(1.5%, 24px)'
+            's': 'min(0.25%, 8px)',
+            'm': 'min(0.5%, 16px)',
+            'l': 'min(0.75%, 24px)'
         };
-        this.defaultPadding = 'min(1%, 16px)'; // Default to M
+        this.defaultPadding = 'min(0.5%, 16px)'; // Default to M
 
         this._init();
     }
@@ -53,7 +53,7 @@ class PhotoWall {
                 transform-origin: center center;
                 box-sizing: border-box;
                 display: flex;
-                width: 25%;
+                width: 20%;
                 min-height: 12%
                 flex-direction: column;
                 align-items: center;
