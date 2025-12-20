@@ -11,7 +11,7 @@ class PhotoWall {
 
         // Internal state
         this.items = [];
-        this.zIndexCounter = 100;
+        this.zIndexCounter = 1;
 
         // Styles mapping
         this.paddingMap = {
@@ -27,7 +27,6 @@ class PhotoWall {
     _init() {
         // 1. Setup Container
         this.container.style.position = 'relative';
-        this.container.style.overflow = 'hidden';
         this.container.style.userSelect = 'none';
 
         // 2. Inject CSS
@@ -215,14 +214,42 @@ class PhotoWall {
     }
 
     _renderItems() {
-        if (!this.config.pinned) return;
+        if (!this.config.pinned || this.config.pinned.length === 0) return;
+
+        const count = this.config.pinned.length;
+        const rect = this.container.getBoundingClientRect();
+
+        // 1. 就像把桌布分成整齐的小方块
+        // 我们计算出合适的行数和列数，确保每一张照片都有自己的“领地”
+        const aspectRatio = rect.width / rect.height;
+        const cols = Math.ceil(Math.sqrt(count * aspectRatio));
+        const rows = Math.ceil(count / cols);
+
+        const cellWidth = 100 / cols;
+        const cellHeight = 100 / rows;
 
         this.config.pinned.forEach((item, index) => {
-            this._createPin(item, index);
+            // 2. 算出这张照片应该在哪一个格子里
+            const r = Math.floor(index / cols);
+            const c = index % cols;
+
+            console.log(`Placing item ${index} at row ${r}, col ${c}`);
+
+            // 3. 在格子里加入一点点“调皮”的偏移
+            // 这样它们就不会排成僵硬的直线啦
+            const jitterX = (Math.random() - 0.5) * (cellWidth * 0.5);
+            const jitterY = (Math.random() - 0.5) * (cellHeight * 0.5);
+
+            const left = (c * cellWidth) + cellWidth * 0.5 + jitterX;
+            const top = (r * cellHeight) + cellHeight * 0.5 + jitterY;
+
+            // 4. 把计算好的位置传给创建照片的小工具
+            // 这里我们稍微修改一下 _createPin 的参数，或者直接在里面设置位置
+            this._createPinAt(item, top, left);
         });
     }
 
-    _createPin(data, index) {
+    _createPinAt(data, top, left) {
         const el = document.createElement('div');
         el.className = 'pw-photo-container';
 
@@ -259,12 +286,10 @@ class PhotoWall {
         // 4. Position & Rotate (Random Scattering)
         // Using % for positions to ensure scalability
         const rot = Math.random() * 20 - 10;
-        const top = 2 + Math.random() * 75; 
-        const left = 2 + Math.random() * 75; 
 
         el.style.top = `${top}%`;
         el.style.left = `${left}%`;
-        el.style.transform = `rotate(${rot}deg)`;
+        el.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
         el.dataset.rotation = rot;
 
         // Store raw data for lightbox
@@ -323,17 +348,26 @@ class PhotoWall {
             const dxPx = e.clientX - startX;
             const dyPx = e.clientY - startY;
 
-            if (Math.abs(dxPx) > 2 || Math.abs(dyPx) > 2) {
-                didMove = true;
-                el.dataset.isDragging = 'true';
-            }
-
-            // Convert delta pixels to delta percentage
+            // 转化为百分比偏移
             const dxPct = (dxPx / this.containerWidth) * 100;
             const dyPct = (dyPx / this.containerHeight) * 100;
 
-            el.style.left = `${startLeftPct + dxPct}%`;
-            el.style.top = `${startTopPct + dyPct}%`;
+            // --- Iris 的“边界小篱笆” ---
+            // 算出的新位置如果小于 0，就把它拉回到 0；
+            // 如果大于 100，就把它拽回到 100。
+            // 这样照片的中心点就永远只能在 0% 到 100% 之间跳舞啦！
+            let newLeft = startLeftPct + dxPct;
+            let newTop = startTopPct + dyPct;
+
+            newLeft = Math.max(0, Math.min(100, newLeft));
+            newTop = Math.max(0, Math.min(100, newTop));
+
+            el.style.left = `${newLeft}%`;
+            el.style.top = `${newTop}%`;
+            
+            if (Math.abs(dxPx) > 2 || Math.abs(dyPx) > 2) {
+                el.dataset.isDragging = 'true';
+            }
         };
 
         const onMouseUp = () => {
