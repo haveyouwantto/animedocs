@@ -310,74 +310,109 @@ class PhotoWall {
         let isDragging = false;
         let startX, startY;
         let startLeftPct, startTopPct;
-        let didMove = false;
-
-        const onMouseDown = (e) => {
-            if (e.button !== 0) return; // Only left click
-            e.preventDefault();
-            e.stopPropagation();
-
+        
+        // --- 通用：开始拖拽逻辑 ---
+        const startDrag = (clientX, clientY) => {
             isDragging = true;
-            didMove = false;
             el.dataset.isDragging = 'false';
 
             // Bring to front
             this.zIndexCounter++;
             el.style.zIndex = this.zIndexCounter;
-            el.style.transition = 'none'; // Disable transition during drag
+            el.style.transition = 'none';
 
-            startX = e.clientX;
-            startY = e.clientY;
+            startX = clientX;
+            startY = clientY;
 
-            // Get current percentage positions
             const containerRect = this.container.getBoundingClientRect();
             startLeftPct = parseFloat(el.style.left);
             startTopPct = parseFloat(el.style.top);
 
-            // Store container dimensions for pixel-to-percent conversion
             this.containerWidth = containerRect.width;
             this.containerHeight = containerRect.height;
-
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
         };
 
-        const onMouseMove = (e) => {
+        // --- 通用：移动逻辑 ---
+        const moveDrag = (clientX, clientY) => {
             if (!isDragging) return;
 
-            const dxPx = e.clientX - startX;
-            const dyPx = e.clientY - startY;
+            const dxPx = clientX - startX;
+            const dyPx = clientY - startY;
 
             // 转化为百分比偏移
             const dxPct = (dxPx / this.containerWidth) * 100;
             const dyPct = (dyPx / this.containerHeight) * 100;
 
-            // --- Iris 的“边界小篱笆” ---
-            // 算出的新位置如果小于 0，就把它拉回到 0；
-            // 如果大于 100，就把它拽回到 100。
-            // 这样照片的中心点就永远只能在 0% 到 100% 之间跳舞啦！
             let newLeft = startLeftPct + dxPct;
             let newTop = startTopPct + dyPct;
 
+            // 边界限制 (0% - 100%)
             newLeft = Math.max(0, Math.min(100, newLeft));
             newTop = Math.max(0, Math.min(100, newTop));
 
             el.style.left = `${newLeft}%`;
             el.style.top = `${newTop}%`;
-            
+
             if (Math.abs(dxPx) > 2 || Math.abs(dyPx) > 2) {
                 el.dataset.isDragging = 'true';
             }
         };
 
-        const onMouseUp = () => {
+        // --- 通用：结束逻辑 ---
+        const endDrag = () => {
             isDragging = false;
             el.style.transition = 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out';
+        };
+
+        // --- Mouse Events (原有逻辑优化) ---
+        const onMouseDown = (e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            e.stopPropagation();
+            startDrag(e.clientX, e.clientY);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        };
+        const onMouseMove = (e) => moveDrag(e.clientX, e.clientY);
+        const onMouseUp = () => {
+            endDrag();
             document.removeEventListener('mousemove', onMouseMove);
             document.removeEventListener('mouseup', onMouseUp);
         };
-
         el.addEventListener('mousedown', onMouseDown);
+
+        // --- Touch Events (新增部分) ---
+        const onTouchStart = (e) => {
+            if (e.touches.length > 1) return; // 忽略多指触控
+            e.stopPropagation(); 
+            // 注意：这里不要 preventDefault，否则无法触发 click 事件打开 Lightbox
+            startDrag(e.touches[0].clientX, e.touches[0].clientY);
+            
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            document.addEventListener('touchend', onTouchEnd);
+        };
+
+        const onTouchMove = (e) => {
+            if (!isDragging) return;
+            // 只有在真的拖动时才阻止默认行为（防止页面滚动）
+            e.preventDefault(); 
+            moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+        };
+
+        const onTouchEnd = () => {
+            endDrag();
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+        };
+
+        // Passive: false 是必须的，为了能在 touchmove 中使用 preventDefault
+        el.addEventListener('touchstart', onTouchStart, { passive: false });
+    }
+
+    _getDistance(touch1, touch2) {
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        return Math.hypot(dx, dy);
     }
 
     _darkenColor(hex) {
@@ -414,6 +449,12 @@ class PhotoWall {
 
         // Zoom & Pan Variables
         this.lbState = { scale: 1, x: 0, y: 0, isDragging: false };
+        this.touchState = { 
+            initialDist: 0, 
+            initialScale: 1,
+            lastX: 0,
+            lastY: 0
+        };
 
         // Wheel Zoom
         this.lightbox.addEventListener('wheel', (e) => {
@@ -443,6 +484,67 @@ class PhotoWall {
         window.addEventListener('mouseup', () => {
             this.lbState.isDragging = false;
         });
+
+        const onLbTouchStart = (e) => {
+            if (e.touches.length === 1) {
+                // 单指：平移 Pan
+                this.lbState.isDragging = true;
+                this.touchState.lastX = e.touches[0].clientX;
+                this.touchState.lastY = e.touches[0].clientY;
+            } else if (e.touches.length === 2) {
+                // 双指：缩放 Pinch
+                this.lbState.isDragging = false; // 双指时停止平移
+                this.touchState.initialDist = this._getDistance(e.touches[0], e.touches[1]);
+                this.touchState.initialScale = this.lbState.scale;
+            }
+        };
+
+        const onLbTouchMove = (e) => {
+            e.preventDefault(); // 阻止背景滚动
+
+            if (e.touches.length === 1 && this.lbState.isDragging) {
+                // 处理平移
+                const clientX = e.touches[0].clientX;
+                const clientY = e.touches[0].clientY;
+                
+                const dx = clientX - this.touchState.lastX;
+                const dy = clientY - this.touchState.lastY;
+
+                this.lbState.x += dx;
+                this.lbState.y += dy;
+                
+                this.touchState.lastX = clientX;
+                this.touchState.lastY = clientY;
+                
+                this._updateLightboxTransform();
+
+            } else if (e.touches.length === 2) {
+                // 处理缩放
+                const currentDist = this._getDistance(e.touches[0], e.touches[1]);
+                if (this.touchState.initialDist > 0) {
+                    const ratio = currentDist / this.touchState.initialDist;
+                    let newScale = this.touchState.initialScale * ratio;
+                    // 限制缩放范围
+                    newScale = Math.min(Math.max(0.5, newScale), 4);
+                    
+                    this.lbState.scale = newScale;
+                    this._updateLightboxTransform();
+                }
+            }
+        };
+
+        const onLbTouchEnd = (e) => {
+            if (e.touches.length < 2) {
+                this.touchState.initialDist = 0;
+            }
+            if (e.touches.length === 0) {
+                this.lbState.isDragging = false;
+            }
+        };
+
+        this.lightbox.addEventListener('touchstart', onLbTouchStart, { passive: false });
+        this.lightbox.addEventListener('touchmove', onLbTouchMove, { passive: false });
+        this.lightbox.addEventListener('touchend', onLbTouchEnd);
     }
 
     _showLightbox(data) {
